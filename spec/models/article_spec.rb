@@ -21,6 +21,27 @@ describe Article do
     end
   end
 
+  it "test two articles are merged correctly" do
+    article1 = Article.new(id: 1, author:'admin1', title: "foobar", body: "lorem_ipsum")
+    article2 = Article.new(id: 2, author: 'admin2', title: "foobar2", body: "lorem_ipsum2")
+    article1.save; article2.save
+    article1.merge(article2.id)
+    article1.body.should include "lorem_ipsum2"
+    article1.author.should eq 'admin1'
+    article1.title.should eq 'foobar'
+  end
+
+  it "test article take comments from merged article and this one is destroyed" do
+    article1 = Article.new(id: 1, title: "foobar", body: "lorem_ipsum")
+    article2 = Article.new(id: 2, title: "foobar", body: "lorem_ipsum2")
+    article1.save; article2.save
+    art1_comment = Factory(:comment, :article => article1)
+    art2_comment = Factory(:comment, :article => article2)
+    article1.merge(article2.id)
+    article1.comments.should include art2_comment
+    expect(Article.find_by_id(article2)).to be_nil
+  end
+
   it "test_content_fields" do
     a = Article.new
     assert_equal [:body, :extended], a.content_fields
@@ -184,25 +205,25 @@ describe Article do
   ### XXX: Should we have a test here?
   it "test_send_multiple_pings" do
   end
-  
+
   describe "Testing redirects" do
     it "a new published article gets a redirect" do
       a = Article.create(:title => "Some title", :body => "some text", :published => true)
       a.redirects.first.should_not be_nil
       a.redirects.first.to_path.should == a.permalink_url
     end
-    
-    it "a new unpublished article should not get a redirect" do 
+
+    it "a new unpublished article should not get a redirect" do
       a = Article.create(:title => "Some title", :body => "some text", :published => false)
       a.redirects.first.should be_nil
     end
-    
+
     it "Changin a published article permalink url should only change the to redirection" do
       a = Article.create(:title => "Some title", :body => "some text", :published => true)
       a.redirects.first.should_not be_nil
       a.redirects.first.to_path.should == a.permalink_url
       r  = a.redirects.first.from_path
-      
+
       a.permalink = "some-new-permalink"
       a.save
       a.redirects.first.should_not be_nil
@@ -571,7 +592,7 @@ describe Article do
     describe "#find_by_permalink" do
       it "uses UTC to determine correct day" do
         @a.save
-        a = Article.find_by_permalink :year => 2011, :month => 2, :day => 21, :permalink => 'a-big-article' 
+        a = Article.find_by_permalink :year => 2011, :month => 2, :day => 21, :permalink => 'a-big-article'
         a.should == @a
       end
     end
@@ -592,7 +613,7 @@ describe Article do
     describe "#find_by_permalink" do
       it "uses UTC to determine correct day" do
         @a.save
-        a = Article.find_by_permalink :year => 2011, :month => 2, :day => 22, :permalink => 'a-big-article' 
+        a = Article.find_by_permalink :year => 2011, :month => 2, :day => 22, :permalink => 'a-big-article'
         a.should == @a
       end
     end
