@@ -418,12 +418,13 @@ class Article < Content
 
   def merge(id)
     merged_article = Article.find_by_id(id)
+
     if merged_article
       self.update_attribute(:body ,"#{self.body} #{merged_article.body}")
       merged_article.comments.each do |comment|
         self.comments << comment
       end
-      merged_article.destroy
+      self.reload
       return true
     else
       return false

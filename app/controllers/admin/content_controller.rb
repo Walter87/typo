@@ -12,6 +12,7 @@ class Admin::ContentController < Admin::BaseController
   end
 
   def index
+
     @search = params[:search] ? params[:search] : {}
 
     @articles = Article.search_with_pagination(@search, {:page => params[:page], :per_page => this_blog.admin_display_elements})
@@ -29,12 +30,13 @@ class Admin::ContentController < Admin::BaseController
 
   def merge_with
     @article = Article.find_by_id(params[:article_id])
-    unless @article.access_by? current_user
+    unless current_user.admin?
       redirect_to :action => 'index'
       flash[:error] = _("Error, you are not allowed to perform this action")
       return
     end
     if @article.merge(params[:merge_with])
+      Article.find_by_id(params[:merge_with]).destroy
       redirect_to action: "/admin/content/edit/#{@article.id}"
     else
       redirect_to "/admin/content/edit/#{@article.id}"
